@@ -114,6 +114,8 @@ int8_t npnt_reset_handle(npnt_s *handle);
 
 int8_t npnt_verify_permart(npnt_s *handle);
 
+int8_t sign_log_data(npnt_s *handle, uint8_t *log, uint16_t log_size, char* digest_value);
+
 int8_t npnt_alloc_and_get_fence_points(npnt_s* handle, float* vertx, float* verty);
 
 int8_t npnt_get_max_altitude(npnt_s* handle, float* altitude);

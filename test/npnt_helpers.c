@@ -12,21 +12,21 @@
 #include <openssl/pem.h>
 #endif
 
-static SHA_CTX sha;
+static SHA256_CTX sha;
 
-void reset_sha1()
+void reset_sha256()
 {
-    SHA1_Init(&sha);
+    SHA256_Init(&sha);
 }
 
-void update_sha1(const char* data, uint16_t data_len)
+void update_sha256(const char* data, uint16_t data_len)
 {
-    SHA1_Update(&sha, data, data_len);
+    SHA256_Update(&sha, data, data_len);
 }
 
-void final_sha1(char* hash)
+void final_sha256(char* hash)
 {
-    SHA1_Final((unsigned char*)hash, &sha);
+    SHA256_Final((unsigned char*)hash, &sha);
 }
 
 
@@ -38,10 +38,10 @@ static RsaKey*        pRsaKey = NULL;
 int8_t npnt_check_authenticity(npnt_s *handle, uint8_t* raw_data, uint16_t raw_data_len, uint8_t* signature, uint16_t signature_len)
 {
     int ret = 0;
-
+    printf("heredf\n");
     if (pRsaKey == NULL) {
         /* Initialize the RSA key and decode the DER encoded public key. */
-        FILE *fp = fopen("dgca_pubkey.pem", "r");
+        FILE *fp = fopen("_dgca_pubkey.pem", "r");
         if (fp == NULL) {
             return -1;
         }
@@ -105,12 +105,13 @@ int8_t npnt_check_authenticity(npnt_s *handle, uint8_t* raw_data, uint16_t raw_d
         return -1;
     }
     if (dgca_pkey == NULL) {
-        FILE *fp = fopen("dgca_pubkey.pem", "r");
+        FILE *fp = fopen("_dgca_pubkey.pem", "r");
         if (fp == NULL) {
             return -1;
         }
         dgca_pkey = PEM_read_PUBKEY(fp, NULL, NULL, NULL);
     }
+    printf("here\n");
     dgca_pkey_ctx = EVP_PKEY_CTX_new(dgca_pkey, ENGINE_get_default_RSA());
     if (!dgca_pkey_ctx) {
         return -1;
@@ -124,7 +125,7 @@ int8_t npnt_check_authenticity(npnt_s *handle, uint8_t* raw_data, uint16_t raw_d
         ret = -1;
         goto fail;
     }
-    if (EVP_PKEY_CTX_set_signature_md(dgca_pkey_ctx, EVP_sha1()) <= 0) {
+    if (EVP_PKEY_CTX_set_signature_md(dgca_pkey_ctx, EVP_sha256()) <= 0) {
         ret = -1;
         goto fail;
     }

@@ -229,11 +229,11 @@ int16_t extract_public_key_from_xml_artefact()
         return -1;
     }
 
-    BIO_printf(outbio, "-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----\n", cert_der);
+    BIO_printf(outbio, "-----BEGIN CERTIFICATE-----\n%s-----END CERTIFICATE-----\n", cert_der);
 
     //Create Openssl Certificate from raw
     cert_bio = BIO_new(BIO_s_mem());
-    BIO_printf(cert_bio, "-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----\n", cert_der);
+    BIO_printf(cert_bio, "-----BEGIN CERTIFICATE-----\n%s-----END CERTIFICATE-----\n", cert_der);
     cert = PEM_read_bio_X509(cert_bio, NULL, 0, NULL);
     if (!cert) {
         BIO_printf(outbio, "Error loading cert into memory\n");
@@ -253,7 +253,7 @@ int16_t extract_public_key_from_xml_artefact()
         BIO_printf(outbio, "\nFound non-RSA Key\n");
     }
     PEM_write_bio_PUBKEY(outbio, permart_pkey);
-    FILE* pkey_fp = fopen("dgca_pubkey.pem", "w");
+    FILE* pkey_fp = fopen("_dgca_pubkey.pem", "w");
     PEM_write_PUBKEY(pkey_fp, permart_pkey);
     fclose(pkey_fp);
 

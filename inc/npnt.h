@@ -25,6 +25,10 @@ void reset_sha1();
 void update_sha1(const char* data, uint16_t data_len);
 void final_sha1(char* hash);
 
+void reset_sha256();
+void update_sha256(const char* data, uint16_t data_len);
+void final_sha256(char* hash);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

@@ -73,6 +73,8 @@ int8_t npnt_sign_raw_data(npnt_s *handle, uint8_t* raw_data, uint16_t raw_data_l
  */
 int8_t npnt_security_init(npnt_s* handle);
 
+int __sign_hash(uint8_t* hashed_data, uint16_t hashed_data_len, uint8_t* signature);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
