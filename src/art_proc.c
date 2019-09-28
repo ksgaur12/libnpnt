@@ -36,20 +36,17 @@ int8_t npnt_set_permart(npnt_s *handle, uint8_t *permart, uint16_t permart_lengt
     int16_t ret = 0;
     //Extract XML from base64 encoded permart
     if (handle->raw_permart) {
-    	printf("PA already set\n");
         return NPNT_ALREADY_SET;
     }
 
     if (base64_encoded) {
         handle->raw_permart = (char*)base64_decode(permart, permart_length, &handle->raw_permart_len);
         if (!handle->raw_permart) {
-        	printf("PA Parse failed\n");
             return NPNT_PARSE_FAILED;
         }
     } else {
         handle->raw_permart = (char*)malloc(permart_length);
         if (!handle->raw_permart) {
-        	printf("PA parse failed\n");
             return NPNT_PARSE_FAILED;
         }
         memcpy(handle->raw_permart, permart, permart_length);
@@ -58,14 +55,12 @@ int8_t npnt_set_permart(npnt_s *handle, uint8_t *permart, uint16_t permart_lengt
     //parse XML permart
     handle->parsed_permart = mxmlLoadString(NULL, handle->raw_permart, MXML_OPAQUE_CALLBACK);
     if (!handle->parsed_permart) {
-    	printf("PA parse failed_\n");
         return NPNT_PARSE_FAILED;
     }
 
     //Verify Artifact against Sender's Public Key
     ret = npnt_verify_permart(handle);
     if (ret < 0) {
-    	printf("verify failed: %d\n", ret);
         return ret;
     }
 
@@ -73,7 +68,6 @@ int8_t npnt_set_permart(npnt_s *handle, uint8_t *permart, uint16_t permart_lengt
     ret = npnt_alloc_and_get_fence_points(handle, handle->fence.vertlat, handle->fence.vertlon);
     if (ret <= 0) {
         handle->fence.nverts = 0;
-        printf("bad fence PA\n");
         return NPNT_BAD_FENCE;
     }
     handle->fence.nverts = ret;
@@ -84,7 +78,6 @@ int8_t npnt_set_permart(npnt_s *handle, uint8_t *permart, uint16_t permart_lengt
     //Set Flight Params from artefact
     ret = npnt_populate_flight_params(handle);
     if (ret < 0) {
-    	printf("bag PA params\n");
         handle->fence.nverts = 0;
         return NPNT_INV_FPARAMS;
     }
@@ -117,13 +110,11 @@ int8_t npnt_verify_permart(npnt_s *handle)
                 strlen("<SignedInfo xmlns=\"http://www.w3.org/2000/09/xmldsig#\">"));
     signed_info = strstr(handle->raw_permart, "<SignedInfo>") + strlen("<SignedInfo>");
     if (signed_info == NULL) {
-    	printf("hi1\n");
         ret = NPNT_INV_ART;
         goto fail;
     }
     signedinfo_length = strstr(handle->raw_permart, "<SignatureValue") - signed_info;
     if (signedinfo_length < 0) {
-    	printf("hi2\n");
         ret = NPNT_INV_ART;
         goto fail;
     }
@@ -163,7 +154,6 @@ int8_t npnt_verify_permart(npnt_s *handle)
     //fetch SignatureValue from xml
     signature = (const uint8_t*)mxmlGetOpaque(mxmlFindElement(handle->parsed_permart, handle->parsed_permart, "SignatureValue", NULL, NULL, MXML_DESCEND));
     if (signature == NULL) {
-    	printf("hi3\n");
     	ret = NPNT_INV_SIGN;
         goto fail;
     }
@@ -171,7 +161,6 @@ int8_t npnt_verify_permart(npnt_s *handle)
     raw_signature = base64_decode(signature, signature_len, &raw_signature_len);
     //Check authenticity of the artifact
     if (npnt_check_authenticity(handle, digest_value, 32, raw_signature, raw_signature_len) != 1) {
-    	printf("hi4\n");
         ret = NPNT_INV_AUTH;
         goto fail;
     }
@@ -179,20 +168,14 @@ int8_t npnt_verify_permart(npnt_s *handle)
     //Digest Canonicalised Permission Artifact
     raw_perm_without_sign = strstr(handle->raw_permart, "<UAPermission");
     if (raw_perm_without_sign == NULL) {
-    	printf("hi5\n");
         ret = NPNT_INV_ART;
         goto fail;
     }
     permission_length = strstr(handle->raw_permart, "<Signature") - raw_perm_without_sign;
     if (permission_length < 0) {
-    	printf("hi6\n");
         ret = NPNT_INV_ART;
         goto fail;
     }
-    // test_str = (char*)malloc(permission_length + 1);
-    // memcpy(test_str, raw_perm_without_sign, permission_length);
-    // test_str[permission_length] = '\0';
-    // printf("\n RAW PERMISSION: \n%s", test_str);
 
     reset_sha256();
     curr_ptr = 0;
@@ -243,15 +226,12 @@ int8_t npnt_verify_permart(npnt_s *handle)
     update_sha256(raw_perm_without_sign, valid_count);
     final_sha256(digest_value);
     base64_digest_value = base64_encode(digest_value, 32, &base64_digest_value_len);
-    // printf("\nDigest Value: \n%s\n", base64_digest_value);
-    // printf("\nDigest Value: \n%s\n", mxmlGetOpaque(mxmlFindElement(handle->parsed_permart, handle->parsed_permart, "DigestValue", NULL, NULL, MXML_DESCEND)));
     
     //Check Digestion
     rcvd_digest_value = (const uint8_t*)mxmlGetOpaque(mxmlFindElement(handle->parsed_permart, handle->parsed_permart, "DigestValue", NULL, NULL, MXML_DESCEND));
     for (uint16_t i = 0; i < base64_digest_value_len - 1; i++) {
         if (base64_digest_value[i] != rcvd_digest_value[i]) {
             ret = NPNT_INV_DGST;
-        	printf("hi7\n");
             goto fail;
         }
     }
@@ -349,7 +329,6 @@ int8_t npnt_get_max_altitude(npnt_s* handle, float* altitude)
     alt_str = mxmlElementGetAttr(flightparams, "maxAltitude");
     if (alt_str) {
         *altitude = atof(alt_str);
-        // printf("Altitude: %f\n", *altitude);
     } else {
         return -1;
     }
@@ -393,8 +372,6 @@ int8_t npnt_ist_date_time_to_unix_time(const char* dt_string, struct tm* date_ti
     date_time->tm_sec = atoi(data);
 
     return 0;
-    // time_t tim = mktime(date_time);
-    // printf("\nUnixTime: %s\n", ctime(&tim));
 }
 
 char* npnt_get_attr(mxml_node_t *node, const char* attr)
